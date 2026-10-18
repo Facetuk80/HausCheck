@@ -208,7 +208,10 @@
         <div class="rounded-[2rem] border border-white bg-white p-6 soft-shadow sm:p-9">
           <h3 class="display text-2xl font-extrabold text-[#153c2d]">Conecta con HausCheck</h3>
           <p class="mt-2 text-sm leading-6 text-slate-500">Completa el formulario y cuéntanos un poco sobre ti.</p>
-          <form id="contactForm" class="mt-7 space-y-5">
+          <form id="contactForm" action="https://formsubmit.co/jordioliveras80@gmail.com" method="POST" class="mt-7 space-y-5">
+            <input type="hidden" name="_subject" value="Nueva consulta desde HausCheck">
+            <input type="hidden" name="_template" value="table">
+            <input type="hidden" name="_captcha" value="true">
             <div class="grid gap-5 sm:grid-cols-2">
               <div><label for="name" class="mb-2 block text-sm font-bold text-slate-700">Nombre *</label><input id="name" name="name" class="field" autocomplete="given-name" placeholder="Tu nombre" required></div>
               <div><label for="surname" class="mb-2 block text-sm font-bold text-slate-700">Apellidos</label><input id="surname" name="surname" class="field" autocomplete="family-name" placeholder="Tus apellidos"></div>
@@ -230,12 +233,12 @@
             <div><label for="location" class="mb-2 block text-sm font-bold text-slate-700">Zona o ciudad de interés (opcional)</label><input id="location" name="location" class="field" placeholder="Ej. Barcelona, Vallès Occidental..."></div>
             <div><label for="message" class="mb-2 block text-sm font-bold text-slate-700">¿Qué te gustaría conocer del vecindario?</label><textarea id="message" name="message" rows="4" class="field resize-y" placeholder="Cuéntanos qué te preocupa o qué sería útil para ti..."></textarea></div>
             <div class="flex items-start gap-3">
-              <input id="privacy" name="privacy" type="checkbox" required class="mt-1 h-4 w-4 rounded border-slate-300 accent-[#22b96d]">
+              <input id="privacy" name="privacy" value="Consentimiento aceptado" type="checkbox" required class="mt-1 h-4 w-4 rounded border-slate-300 accent-[#22b96d]">
               <label for="privacy" class="text-xs leading-5 text-slate-500">Acepto que se utilicen mis datos para responder a esta consulta. * Antes de publicar la web, añade aquí un enlace a tu política de privacidad y completa la información legal del responsable del tratamiento.</label>
             </div>
             <button type="submit" class="btn flex w-full items-center justify-center gap-2 rounded-full bg-[#22b96d] px-6 py-4 font-bold text-white">Enviar mi consulta <span aria-hidden="true">→</span></button>
             <p id="formStatus" role="status" aria-live="polite" class="hidden rounded-xl p-4 text-sm leading-6"></p>
-            <p class="text-center text-xs leading-5 text-slate-400">* Campos obligatorios. Si el formulario aún no está conectado a un endpoint, se abrirá tu aplicación de correo con el mensaje preparado.</p>
+            <p class="text-center text-xs leading-5 text-slate-400">* Campos obligatorios. El envío se procesa mediante FormSubmit; en el primer envío puede ser necesario confirmar la dirección de destino desde el correo que recibas.</p>
           </form>
         </div>
       </div>
@@ -257,71 +260,7 @@
   </footer>
 
   <script>
-    /*
-      CONFIGURACIÓN DEL FORMULARIO:
-      1. Cuando tengas el endpoint, asígnalo a FORM_ENDPOINT.
-      2. El endpoint debe aceptar una petición POST con JSON y permitir CORS desde el dominio de esta página.
-      3. Si lo dejas vacío, el formulario abrirá el programa de correo del visitante como alternativa.
-    */
-    const FORM_ENDPOINT = "";
-    const CONTACT_EMAIL = "jordioliveras80@gmail.com";
-
     document.getElementById("year").textContent = new Date().getFullYear();
-    const form = document.getElementById("contactForm");
-    const statusBox = document.getElementById("formStatus");
-
-    function showStatus(message, success) {
-      statusBox.textContent = message;
-      statusBox.className = "rounded-xl p-4 text-sm leading-6 " +
-        (success ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900");
-    }
-
-    form.addEventListener("submit", async function(event) {
-      event.preventDefault();
-      if (!form.reportValidity()) return;
-
-      const data = Object.fromEntries(new FormData(form).entries());
-      data.privacy = document.getElementById("privacy").checked;
-      data.source = "Landing page HausCheck";
-      data.submittedAt = new Date().toISOString();
-
-      if (FORM_ENDPOINT.trim()) {
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton.innerHTML;
-        submitButton.disabled = true;
-        submitButton.textContent = "Enviando...";
-        try {
-          const response = await fetch(FORM_ENDPOINT, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-          });
-          if (!response.ok) throw new Error("HTTP " + response.status);
-          showStatus("¡Gracias! Tu consulta se ha enviado correctamente.", true);
-          form.reset();
-        } catch (error) {
-          showStatus("No se ha podido enviar el formulario al servidor. Comprueba el endpoint y su configuración CORS, o inténtalo por email: " + CONTACT_EMAIL, false);
-        } finally {
-          submitButton.disabled = false;
-          submitButton.innerHTML = originalText;
-        }
-      } else {
-        const subject = encodeURIComponent("Consulta desde la web de HausCheck");
-        const body = encodeURIComponent(
-          "Nueva consulta desde la landing page de HausCheck\n\n" +
-          "Nombre: " + (data.name || "") + "\n" +
-          "Apellidos: " + (data.surname || "") + "\n" +
-          "Email: " + (data.email || "") + "\n" +
-          "Teléfono: " + (data.phone || "") + "\n" +
-          "Interés: " + (data.interest || "") + "\n" +
-          "Zona: " + (data.location || "") + "\n\n" +
-          "Mensaje:\n" + (data.message || "") + "\n\n" +
-          "Consentimiento de contacto: " + (data.privacy ? "Sí" : "No")
-        );
-        showStatus("No se ha configurado todavía un endpoint. Se abrirá tu aplicación de correo con la información preparada; tendrás que pulsar Enviar allí.", true);
-        window.location.href = "mailto:" + CONTACT_EMAIL + "?subject=" + subject + "&body=" + body;
-      }
-    });
   </script>
 </body>
 </html>
