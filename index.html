@@ -38,7 +38,6 @@
   </style>
 </head>
 <body class="antialiased">
-  <!-- CONFIGURACIÓN: cuando tengas el endpoint del formulario, pégalo en FORM_ENDPOINT en el script del final. -->
   <header class="relative z-20">
     <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 lg:px-8" aria-label="Navegación principal">
       <a href="#inicio" class="flex items-center gap-3" aria-label="HausCheck, inicio">
@@ -261,6 +260,22 @@
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
+
+    // El formulario usa el endpoint POST de FormSubmit configurado en el atributo action.
+    // Evita cualquier fallback antiguo que abra la aplicación de correo.
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+      contactForm.addEventListener("submit", function (event) {
+        if (!contactForm.action.startsWith("https://formsubmit.co/") || contactForm.method.toLowerCase() !== "post") {
+          event.preventDefault();
+          const status = document.getElementById("formStatus");
+          if (status) {
+            status.textContent = "El formulario no está conectado correctamente. Inténtalo más tarde.";
+            status.classList.remove("hidden");
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>
